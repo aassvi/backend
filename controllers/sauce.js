@@ -1,6 +1,5 @@
 const Sauce = require('../models/sauce');
-
-//  demande { sauce: String,image: File } 
+const fs = require('fs');
 
 exports.createSauce = (req, res, next) => {
   const sauceObject = JSON.parse(req.body.sauce);
@@ -16,26 +15,10 @@ exports.createSauce = (req, res, next) => {
       usersDisliked: []
 
   });
-
+  
   sauce.save()
   .then(() => { res.status(201).json({message: 'Sauce enregistrée !'})})
   .catch(error => { res.status(400).json( { error })})
-};
-
-exports.getOneSauce = (req, res, next) => {
-  Sauce.findOne({
-    _id: req.params.id
-  }).then(
-    (sauce) => {
-      res.status(200).json(sauce);
-    }
-  ).catch(
-    (error) => {
-      res.status(404).json({
-        error: error
-      });
-    }
-  );
 };
 
 exports.modifySauce = (req, res, next) => {
@@ -60,20 +43,41 @@ exports.modifySauce = (req, res, next) => {
       });
 };
 
-exports.deleteSauce = (req, res, next) => {
-  Sauce.deleteOne({_id: req.params.id}).then(
-    () => {
-      res.status(200).json({
-        message: 'Deleted!'
-      });
+exports.getOneSauce = (req, res, next) => {
+  Sauce.findOne({
+    _id: req.params.id
+  }).then(
+    (sauce) => {
+      res.status(200).json(sauce);
     }
   ).catch(
     (error) => {
-      res.status(400).json({
+      res.status(404).json({
         error: error
       });
     }
   );
+};
+
+
+
+exports.deleteSauce = (req, res, next) => {
+   Sauce.findOne({ _id: req.params.id})
+       .then(sauce => {
+           if (sauce.userId != req.auth.userId) {
+               res.status(401).json({message: 'Not authorized'});
+           } else {
+               const filename = sauce.imageUrl.split('/images/')[1];
+               fs.unlink(`images/${filename}`, () => {
+                   Sauce.deleteOne({_id: req.params.id})
+                       .then(() => { res.status(200).json({message: 'Sauce supprimée !'})})
+                       .catch(error => res.status(401).json({ error }));
+               });
+           }
+       })
+       .catch( error => {
+           res.status(500).json({ error });
+       });
 };
 
 exports.getAllSauces = (req, res, next) => {
@@ -89,3 +93,66 @@ exports.getAllSauces = (req, res, next) => {
     }
   );
 };
+exports.likeSauce = (req, res) => {
+  const userId  = req.body.userId;
+  const like = req.body.like;
+  Sauce.findOne({ _id: req.params.id})
+      .then((sauce) => {
+        if (userId != req.auth.userId) {
+          res.status(401).json({message: 'Not authorized'});
+        }else{
+          if(like === 1){
+              sauce.likes++;
+              if(!sauce.usersLiked.includes(userId)) {
+                  sauce.usersLiked.push(userId);
+              }
+              const index = sauce.usersDisliked.indexOf(userId);
+              if (index > -1) {
+                  sauce.usersDisliked.splice(index, 1);
+                  sauce.dislikes--;
+              }
+          } else if(like === -1){
+              sauce.dislikes++;
+              if(!sauce.usersDisliked.includes(userId)) {
+                  sauce.usersDisliked.push(userId);
+              }
+              const index = sauce.usersLiked.indexOf(userId);
+              if (index > -1) {
+                  sauce.usersLiked.splice(index, 1);
+                  sauce.likes--;
+              }
+          } else if(like === 0) {
+              const index1 = sauce.usersLiked.indexOf(userId);
+              if (index1 > -1) {
+                  sauce.usersLiked.splice(index1, 1);
+                  sauce.likes--;
+              }
+              const index2 = sauce.usersDisliked.indexOf(userId);
+              if (index2 > -1) {
+                  sauce.usersDisliked.splice(index2, 1);
+                  sauce.dislikes--;
+              }
+          }
+          sauce.save()
+              .then((sauce) => {
+                  res.json(sauce);
+                  console.log(' Mise à jour de likes !'+ ' ' + userId + ' ' + like );
+              })
+              .catch((err) => {
+                  res.status(500).json({ message: 'Error saving sauce', error: err });
+              });
+          }     
+      })
+      .catch((err) => {
+          res.status(404).json({ message: 'Sauce not found', error: err });
+      });
+     
+}
+      
+
+  
+      
+      
+      
+      
+      
