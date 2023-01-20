@@ -102,35 +102,35 @@ exports.likeSauce = (req, res) => {
           res.status(401).json({message: 'Not authorized'});
         }else{
           if(like === 1){
-              sauce.likes++;
-              if(!sauce.usersLiked.includes(userId)) {
+              sauce.likes++;                                     // increments likes
+              if(!sauce.usersLiked.includes(userId)) {           //if not in array add array
                   sauce.usersLiked.push(userId);
               }
-              const index = sauce.usersDisliked.indexOf(userId);
-              if (index > -1) {
-                  sauce.usersDisliked.splice(index, 1);
-                  sauce.dislikes--;
+              const index = sauce.usersDisliked.indexOf(userId);  
+              if (index > -1) {                                 // recupere index pour pouvoir le supprimer
+                  sauce.usersDisliked.splice(index, 1);         // supprime userId a cette position 1 seul element
+                  sauce.dislikes--;                             // decrements dislikes
               }
           } else if(like === -1){
-              sauce.dislikes++;
+              sauce.dislikes++;                                 // increments dislikes
               if(!sauce.usersDisliked.includes(userId)) {
                   sauce.usersDisliked.push(userId);
               }
               const index = sauce.usersLiked.indexOf(userId);
               if (index > -1) {
                   sauce.usersLiked.splice(index, 1);
-                  sauce.likes--;
+                  sauce.likes--;                                // decrements likes
               }
           } else if(like === 0) {
               const index1 = sauce.usersLiked.indexOf(userId);
               if (index1 > -1) {
                   sauce.usersLiked.splice(index1, 1);
-                  sauce.likes--;
+                  sauce.likes--;                                 // decrements likes
               }
               const index2 = sauce.usersDisliked.indexOf(userId);
               if (index2 > -1) {
                   sauce.usersDisliked.splice(index2, 1);
-                  sauce.dislikes--;
+                  sauce.dislikes--;                              // decrements dislikes
               }
           }
           sauce.save()
