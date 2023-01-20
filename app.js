@@ -1,5 +1,15 @@
 const express = require('express');
+const rateLimit = require("express-rate-limit");
 const app = express();
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+  message: "Too many requests, please try again later"
+});
+
+//  apply to all requests
+app.use(limiter);
 
 const sauceRoutes = require('./routes/sauce');
 const userRoutes = require('./routes/user');
@@ -17,7 +27,7 @@ mongoose.connect(process.env.CONNECTDB,
   .catch(() => console.log('Connexion à MongoDB échouée !'));
 
 app.use(express.json());
-app.use(helmet.noSniff());  // desactive sécurité fichiers 
+app.use(helmet.noSniff());  // desactive sécurité fichiers type MIME ex image.png correcte et image
 
 
 app.use((req, res, next) => {
