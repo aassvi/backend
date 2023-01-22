@@ -4,7 +4,7 @@ const app = express();
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
+  max: 200, // limit each IP to 100 requests per windowMs
   message: "Too many requests, please try again later"
 });
 
@@ -17,7 +17,7 @@ const path = require('path');
 
 const helmet = require('helmet');
 require('dotenv').config();
-console.log(process.env.CONNECTDB);
+
 
 const mongoose = require('mongoose');
 mongoose.connect(process.env.CONNECTDB,
@@ -37,7 +37,7 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use('/api/sauces', sauceRoutes);
+app.use('/api/sauces',sauceRoutes);
 app.use('/api/auth', userRoutes);
 app.use('/images', express.static(path.join(__dirname, 'images')));
 
